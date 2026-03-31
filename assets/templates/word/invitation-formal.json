@@ -1,0 +1,29 @@
+{
+  "name": "正式邀请函",
+  "description": "正式场合邀请函模板，如会议、活动、庆典等",
+  "variables": {
+    "event_name": "活动名称",
+    "host_organization": "主办单位",
+    "invitee_name": "被邀请人姓名",
+    "invitee_title": "被邀请人职务",
+    "event_date": "活动日期",
+    "event_time": "活动时间",
+    "event_location": "活动地点",
+    "dress_code": "着装要求",
+    "rsvp_date": "回复截止日期",
+    "contact_person": "联系人",
+    "contact_phone": "联系电话",
+    "contact_email": "联系邮箱",
+    "agenda_summary": "议程概要",
+    "special_notes": "特别说明"
+  },
+  "sections": [
+    "邀请函",
+    "活动信息",
+    "时间地点",
+    "议程安排",
+    "注意事项"
+  ],
+  "category": "event",
+  "version": "1.0"
+}

@@ -1,0 +1,157 @@
+{
+  "template_name": "会议纪要",
+  "filename": "meeting-minutes.docx",
+  "description": "会议记录与决议模板",
+  "category": "办公",
+  "placeholders": {
+    "meeting_title": {
+      "type": "text",
+      "label": "会议主题",
+      "required": true
+    },
+    "meeting_date": {
+      "type": "date",
+      "label": "会议日期"
+    },
+    "meeting_time": {
+      "type": "text",
+      "label": "会议时间"
+    },
+    "meeting_location": {
+      "type": "text",
+      "label": "会议地点"
+    },
+    "meeting_type": {
+      "type": "select",
+      "label": "会议类型",
+      "options": [
+        "周例会",
+        "月度会议",
+        "项目会议",
+        "紧急会议",
+        "其他"
+      ]
+    },
+    "chairperson": {
+      "type": "text",
+      "label": "主持人"
+    },
+    "secretary": {
+      "type": "text",
+      "label": "记录人"
+    },
+    "attendees": {
+      "type": "array",
+      "label": "与会人员",
+      "item_fields": [
+        "name",
+        "department",
+        "role"
+      ]
+    },
+    "absentees": {
+      "type": "array",
+      "label": "缺席人员",
+      "item_fields": [
+        "name",
+        "reason"
+      ]
+    },
+    "agenda_items": {
+      "type": "array",
+      "label": "会议议程",
+      "item_fields": [
+        "topic",
+        "duration",
+        "presenter"
+      ]
+    },
+    "discussions": {
+      "type": "richtext",
+      "label": "讨论内容"
+    },
+    "decisions": {
+      "type": "array",
+      "label": "决议事项",
+      "item_fields": [
+        "item",
+        "responsible",
+        "deadline"
+      ]
+    },
+    "action_items": {
+      "type": "array",
+      "label": "行动计划",
+      "item_fields": [
+        "task",
+        "owner",
+        "due_date",
+        "priority"
+      ]
+    },
+    "next_meeting": {
+      "type": "text",
+      "label": "下次会议安排"
+    },
+    "adjournment_time": {
+      "type": "text",
+      "label": "休会时间"
+    },
+    "attachments": {
+      "type": "text",
+      "label": "附件清单"
+    }
+  },
+  "sections": [
+    "基本信息",
+    "与会人员",
+    "会议议程",
+    "讨论内容",
+    "决议事项",
+    "行动计划",
+    "下次会议"
+  ],
+  "styles": {
+    "title": {
+      "font": "黑体",
+      "size": 22,
+      "bold": true,
+      "alignment": "center"
+    },
+    "section": {
+      "font": "黑体",
+      "size": 16,
+      "bold": true
+    },
+    "table_header": {
+      "font": "宋体",
+      "size": 11,
+      "bold": true,
+      "fill": "CCCCCC"
+    },
+    "table_body": {
+      "font": "宋体",
+      "size": 11
+    }
+  },
+  "name": "会议纪要",
+  "variables": {
+    "meeting_title": "会议主题",
+    "meeting_date": "会议日期",
+    "meeting_time": "会议时间",
+    "meeting_location": "会议地点",
+    "meeting_type": "会议类型",
+    "chairperson": "主持人",
+    "secretary": "记录人",
+    "attendees": "与会人员",
+    "absentees": "缺席人员",
+    "agenda_items": "会议议程",
+    "discussions": "讨论内容",
+    "decisions": "决议事项",
+    "action_items": "行动计划",
+    "next_meeting": "下次会议安排",
+    "adjournment_time": "休会时间",
+    "attachments": "附件清单"
+  },
+  "version": "1.0"
+}

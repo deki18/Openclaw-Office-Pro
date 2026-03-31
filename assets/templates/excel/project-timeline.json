@@ -1,0 +1,62 @@
+{
+  "name": "Project Timeline",
+  "description": "项目进度表模板，包含甘特图、里程碑追踪、任务分配等功能",
+  "variables": {
+    "project_name": "项目名称",
+    "project_manager": "项目经理",
+    "start_date": "开始日期",
+    "end_date": "结束日期",
+    "project_status": "项目状态",
+    "budget": "预算",
+    "actual_cost": "实际成本",
+    "phases": [
+      {
+        "phase_name": "阶段名称",
+        "phase_start_date": "阶段开始日期",
+        "phase_end_date": "阶段结束日期",
+        "progress": "完成百分比",
+        "status": "状态",
+        "owner": "负责人"
+      }
+    ],
+    "milestones": [
+      {
+        "milestone_name": "里程碑名称",
+        "planned_date": "计划日期",
+        "actual_date": "实际日期",
+        "status": "状态",
+        "owner": "负责人"
+      }
+    ],
+    "tasks": [
+      {
+        "task_name": "任务名称",
+        "assigned_to": "分配人员",
+        "priority": "优先级",
+        "due_date": "截止日期",
+        "status": "状态",
+        "dependencies": "依赖任务"
+      }
+    ],
+    "risks": [
+      {
+        "risk_description": "风险描述",
+        "probability": "发生概率",
+        "impact": "影响程度",
+        "mitigation": "缓解措施",
+        "owner": "负责人"
+      }
+    ],
+    "resources": [
+      {
+        "resource_name": "资源名称",
+        "resource_type": "资源类型",
+        "allocation": "分配比例",
+        "cost_per_hour": "每小时成本"
+      }
+    ]
+  },
+  "worksheets": ["项目概览", "甘特图", "里程碑", "任务列表", "风险管理", "资源分配"],
+  "category": "project",
+  "version": "1.0"
+}

@@ -1,0 +1,33 @@
+{
+  "name": "项目提案书",
+  "description": "商业项目提案模板，包含项目概述、目标、范围、预算、时间表等",
+  "variables": {
+    "project_title": "项目名称",
+    "client_name": "客户名称",
+    "proposal_date": "提案日期",
+    "prepared_by": "提案人",
+    "executive_summary": "执行摘要",
+    "project_background": "项目背景",
+    "project_objectives": "项目目标",
+    "project_scope": "项目范围",
+    "deliverables": "交付成果",
+    "methodology": "方法论",
+    "timeline": "时间表",
+    "budget_breakdown": "预算明细",
+    "team_structure": "团队结构",
+    "risk_assessment": "风险评估",
+    "success_metrics": "成功指标",
+    "next_steps": "下一步行动"
+  },
+  "sections": [
+    "项目概述",
+    "目标与范围",
+    "方法论",
+    "时间表",
+    "预算",
+    "团队",
+    "风险与成功指标"
+  ],
+  "category": "project",
+  "version": "1.0"
+}

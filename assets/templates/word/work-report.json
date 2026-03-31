@@ -1,0 +1,67 @@
+{
+  "name": "工作报告",
+  "description": "周/月工作报告模板，包含工作完成情况、遇到的问题、下周计划等",
+  "variables": {
+    "report_period": "报告周期",
+    "report_date": "报告日期",
+    "employee_name": "员工姓名",
+    "employee_title": "员工职位",
+    "department": "部门",
+    "manager_name": "主管姓名",
+    "completed_tasks": [
+      {
+        "task": "任务1",
+        "status": "完成",
+        "notes": "备注"
+      },
+      {
+        "task": "任务2",
+        "status": "进行中",
+        "notes": "备注"
+      }
+    ],
+    "ongoing_projects": [
+      {
+        "project": "项目1",
+        "progress": "进度%",
+        "challenges": "挑战"
+      },
+      {
+        "project": "项目2",
+        "progress": "进度%",
+        "challenges": "挑战"
+      }
+    ],
+    "key_achievements": [
+      "成就1",
+      "成就2"
+    ],
+    "challenges_encountered": [
+      "挑战1",
+      "挑战2"
+    ],
+    "solutions_implemented": [
+      "解决方案1",
+      "解决方案2"
+    ],
+    "upcoming_tasks": [
+      "下周任务1",
+      "下周任务2"
+    ],
+    "training_needs": "培训需求",
+    "suggestions": "建议",
+    "hours_worked": "工作时长",
+    "overtime_hours": "加班时长"
+  },
+  "sections": [
+    "工作总结",
+    "完成工作",
+    "进行中项目",
+    "关键成就",
+    "挑战与解决方案",
+    "下周计划",
+    "其他事项"
+  ],
+  "category": "management",
+  "version": "1.0"
+}

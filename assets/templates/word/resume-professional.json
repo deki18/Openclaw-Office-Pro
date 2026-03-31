@@ -1,0 +1,70 @@
+{
+  "name": "专业简历",
+  "description": "专业求职简历模板，包含个人信息、教育背景、工作经验、技能等",
+  "variables": {
+    "full_name": "姓名",
+    "job_title": "目标职位",
+    "contact_email": "邮箱",
+    "contact_phone": "电话",
+    "linkedin_url": "LinkedIn链接",
+    "github_url": "GitHub链接",
+    "personal_website": "个人网站",
+    "professional_summary": "专业概述",
+    "work_experience": [
+      {
+        "company": "公司名称",
+        "position": "职位",
+        "duration": "任职时间",
+        "location": "地点",
+        "achievements": [
+          "成就1",
+          "成就2",
+          "成就3"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "institution": "学校名称",
+        "degree": "学位",
+        "field": "专业",
+        "graduation_year": "毕业年份",
+        "gpa": "GPA"
+      }
+    ],
+    "skills": {
+      "technical": [
+        "技能1",
+        "技能2",
+        "技能3"
+      ],
+      "soft": [
+        "软技能1",
+        "软技能2"
+      ],
+      "languages": [
+        "语言1",
+        "语言2"
+      ]
+    },
+    "certifications": [
+      "证书1",
+      "证书2"
+    ],
+    "projects": [
+      "项目1",
+      "项目2"
+    ]
+  },
+  "sections": [
+    "个人信息",
+    "专业概述",
+    "工作经验",
+    "教育背景",
+    "技能",
+    "证书",
+    "项目"
+  ],
+  "category": "career",
+  "version": "1.0"
+}

@@ -1,0 +1,141 @@
+{
+  "template_name": "商务信函",
+  "filename": "letter-business.docx",
+  "description": "正式商务往来信函模板",
+  "category": "商务",
+  "placeholders": {
+    "sender_company": {
+      "type": "text",
+      "label": "发件公司名称",
+      "required": true
+    },
+    "sender_address": {
+      "type": "text",
+      "label": "发件地址"
+    },
+    "sender_contact": {
+      "type": "text",
+      "label": "发件人联系方式"
+    },
+    "date": {
+      "type": "date",
+      "label": "日期",
+      "format": "YYYY年MM月DD日"
+    },
+    "recipient_name": {
+      "type": "text",
+      "label": "收件人姓名",
+      "required": true
+    },
+    "recipient_title": {
+      "type": "text",
+      "label": "收件人职位"
+    },
+    "recipient_company": {
+      "type": "text",
+      "label": "收件公司"
+    },
+    "salutation": {
+      "type": "text",
+      "label": "称呼",
+      "default": "尊敬的{{recipient_name}}："
+    },
+    "body": {
+      "type": "richtext",
+      "label": "正文内容",
+      "required": true
+    },
+    "closing": {
+      "type": "text",
+      "label": "结尾敬语",
+      "default": "此致敬礼"
+    },
+    "sender_name": {
+      "type": "text",
+      "label": "发件人姓名"
+    },
+    "sender_title": {
+      "type": "text",
+      "label": "发件人职位"
+    },
+    "cc": {
+      "type": "text",
+      "label": "抄送"
+    },
+    "attachments": {
+      "type": "text",
+      "label": "附件"
+    }
+  },
+  "structure": {
+    "header": [
+      "sender_company",
+      "sender_address",
+      "sender_contact"
+    ],
+    "date": [
+      "date"
+    ],
+    "recipient": [
+      "recipient_name",
+      "recipient_title",
+      "recipient_company"
+    ],
+    "salutation": [
+      "salutation"
+    ],
+    "body": [
+      "body"
+    ],
+    "closing": [
+      "closing",
+      "sender_name",
+      "sender_title"
+    ],
+    "footer": [
+      "cc",
+      "attachments"
+    ]
+  },
+  "styles": {
+    "title": {
+      "font": "宋体",
+      "size": 22,
+      "bold": true,
+      "alignment": "center"
+    },
+    "heading": {
+      "font": "黑体",
+      "size": 16,
+      "bold": true
+    },
+    "body": {
+      "font": "仿宋",
+      "size": 14,
+      "line_spacing": 1.5
+    },
+    "signature": {
+      "font": "楷体",
+      "size": 14,
+      "alignment": "right"
+    }
+  },
+  "name": "商务信函",
+  "variables": {
+    "sender_company": "发件公司名称",
+    "sender_address": "发件地址",
+    "sender_contact": "发件人联系方式",
+    "date": "日期",
+    "recipient_name": "收件人姓名",
+    "recipient_title": "收件人职位",
+    "recipient_company": "收件公司",
+    "salutation": "称呼",
+    "body": "正文内容",
+    "closing": "结尾敬语",
+    "sender_name": "发件人姓名",
+    "sender_title": "发件人职位",
+    "cc": "抄送",
+    "attachments": "附件"
+  },
+  "version": "1.0"
+}

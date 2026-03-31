@@ -1,0 +1,30 @@
+{
+  "name": "简单合同模板",
+  "description": "标准商务合同模板，包含基本条款、双方权利义务、保密条款等",
+  "variables": {
+    "contract_title": "合同名称",
+    "party_a": "甲方名称",
+    "party_b": "乙方名称",
+    "contract_date": "签署日期",
+    "effective_date": "生效日期",
+    "end_date": "终止日期",
+    "payment_amount": "合同金额",
+    "payment_terms": "付款方式",
+    "project_description": "项目描述",
+    "delivery_date": "交付日期",
+    "confidentiality": "保密条款",
+    "termination_terms": "终止条款",
+    "signature_a": "甲方签字人",
+    "signature_b": "乙方签字人"
+  },
+  "sections": [
+    "合同条款",
+    "双方权利义务",
+    "付款条件",
+    "保密协议",
+    "违约责任",
+    "争议解决"
+  ],
+  "category": "legal",
+  "version": "1.0"
+}

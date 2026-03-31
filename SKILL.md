@@ -1,0 +1,215 @@
+---
+name: Office Pro
+slug: office-pro
+version: 1.0.0
+description: "Enterprise-grade document automation suite for Microsoft Word and Excel. Create professional documents, reports, and spreadsheets with business templates, dynamic data binding, and template-based generation. Supports template rendering (Jinja2 for Word, data substitution for Excel), batch processing, and cross-format data exchange. Use when (1) generating business documents with consistent branding; (2) creating reports from structured data; (3) automating Excel workflows with templates; (4) converting between CSV/JSON and Office formats; (5) batch document generation is required."
+changelog: "Initial release with Word and Excel automation, 16 enterprise templates, template engine, and CLI tools."
+metadata: {"openclaw":{"emoji":"📊","requires":{"bins":["python3"],"pip":["python-docx","openpyxl","docxtpl","pandas","Pillow","click"]},"os":["linux","darwin","win32"]}}
+---
+
+# Office Pro - 企业级文档自动化套件
+
+专业级 Microsoft Word 和 Excel 文档自动化工具，提供企业级模板、动态数据绑定和批量处理能力。
+
+## 核心功能
+
+### Word 文档处理 (.docx)
+- **模板引擎**：基于 Jinja2 的 `docxtpl`，支持变量、条件、循环
+- **企业模板**：8 个预设专业模板（商务信函、会议纪要、工作报告等）
+- **完整格式支持**：段落、表格、图片、页眉页脚、页码、样式
+- **动态内容**：邮件合并、批量生成
+
+### Excel 表格处理 (.xlsx)
+- **模板驱动**：基于 xlsx-template 理念，数据替换保持格式
+- **企业模板**：8 个预设专业模板（财务报表、项目进度、库存管理等）
+- **高级功能**：图表、透视表、公式、数据验证、条件格式
+- **数据交换**：CSV/JSON 互导、Word ↔ Excel 数据交互
+
+### 批量与自动化
+- 批量文档生成
+- 命令行接口 (CLI)
+- Python API
+
+## 快速开始
+
+### 安装
+
+```bash
+# 使用 pip 安装依赖
+pip install python-docx openpyxl docxtpl pandas Pillow click
+```
+
+### 使用模板生成 Word 文档
+
+```python
+from office_pro import WordProcessor
+
+# 加载模板
+wp = WordProcessor()
+doc = wp.load_template('meeting-minutes.docx')
+
+# 渲染数据
+context = {
+    'meeting_title': 'Q1 产品规划会议',
+    'date': '2024-03-15',
+    'attendees': ['张三', '李四', '王五'],
+    'agenda': [
+        {'topic': '产品路线图回顾', 'duration': '30分钟'},
+        {'topic': '新功能讨论', 'duration': '45分钟'}
+    ]
+}
+
+# 生成文档
+doc.render(context)
+doc.save('output/meeting-minutes-2024-03-15.docx')
+```
+
+### 使用模板生成 Excel 报表
+
+```python
+from office_pro import ExcelProcessor
+
+# 加载模板
+ep = ExcelProcessor()
+wb = ep.load_template('sales-report.xlsx')
+
+# 数据替换
+data = {
+    'report_date': '2024-03-15',
+    'sales_rep': '张三',
+    'total_sales': 150000,
+    'target': 120000,
+    'products': [
+        {'name': '产品A', 'quantity': 100, 'revenue': 50000},
+        {'name': '产品B', 'quantity': 80, 'revenue': 60000},
+        {'name': '产品C', 'quantity': 50, 'revenue': 40000}
+    ]
+}
+
+# 生成报表
+wb.render(data)
+wb.save('output/sales-report-2024-03.xlsx')
+```
+
+### 命令行使用
+
+```bash
+# Word 文档生成
+office-pro word generate --template meeting-minutes.docx --data meeting.json --output meeting-2024-03-15.docx
+
+# Excel 报表生成
+office-pro excel generate --template sales-report.xlsx --data sales.json --output sales-march.xlsx
+
+# 查看可用模板
+office-pro templates list
+
+# 批量生成
+office-pro batch --config batch-config.yaml
+```
+
+## 项目结构
+
+```
+office-pro/
+├── SKILL.md                          # 技能主文档
+├── scripts/                          # 可执行脚本
+│   ├── __init__.py
+│   ├── word_processor.py             # Word 处理核心
+│   ├── excel_processor.py            # Excel 处理核心
+│   ├── template_engine.py            # 模板引擎封装
+│   ├── data_converter.py             # 数据转换工具
+│   └── cli.py                        # 命令行接口
+├── references/                       # 参考文档
+│   ├── word_api_reference.md         # Word API 参考
+│   ├── excel_api_reference.md        # Excel API 参考
+│   ├── template_syntax.md            # 模板语法指南
+│   └── best_practices.md             # 最佳实践
+├── assets/                           # 静态资源
+│   ├── templates/                    # 文档模板
+│   │   ├── word/                     # Word 模板
+│   │   │   ├── letter-business.docx
+│   │   │   ├── meeting-minutes.docx
+│   │   │   ├── project-proposal.docx
+│   │   │   ├── work-report.docx
+│   │   │   ├── contract-simple.docx
+│   │   │   ├── resume-professional.docx
+│   │   │   ├── press-release.docx
+│   │   │   └── invitation-formal.docx
+│   │   └── excel/                    # Excel 模板
+│   │       ├── financial-statement.xlsx
+│   │       ├── budget-template.xlsx
+│   │       ├── project-timeline.xlsx
+│   │       ├── inventory-management.xlsx
+│   │       ├── sales-report.xlsx
+│   │       ├── attendance-tracking.xlsx
+│   │       ├── crm-simple.xlsx
+│   │       └── pivot-demo.xlsx
+│   └── fonts/                        # 字体文件（可选）
+└── tests/                            # 测试用例
+    ├── test_word.py
+    └── test_excel.py
+```
+
+## 技术栈
+
+### 核心依赖
+- **python-docx >= 1.1.2** - Word 文档处理
+- **openpyxl >= 3.1.5** - Excel 表格处理
+- **docxtpl >= 0.6.9** - Word 模板引擎 (基于 Jinja2)
+- **Jinja2 >= 3.1.4** - 模板渲染
+- **pandas >= 2.0.0** - 数据处理与分析
+- **numpy >= 1.24.0** - 数值计算
+- **Pillow >= 10.0.0** - 图片处理
+- **click >= 8.1.0** - CLI 框架
+- **python-dateutil >= 2.8.0** - 日期解析
+
+### 可选依赖
+- **xlwings** - Excel 高级自动化（需要安装 Excel，仅 Windows/macOS）
+- **libreoffice** - 格式转换（PDF 导出）
+- **markdown >= 3.5.0** - Markdown 支持
+- **html2docx >= 0.3.0** - HTML 转 Word
+
+## 路线图
+
+### v1.0.0 (当前)
+- [x] Word 基础功能
+- [x] Excel 基础功能
+- [x] 模板引擎集成
+- [x] 16 个企业模板
+- [x] CLI 工具
+- [x] Python API
+
+### v1.1.0 (计划中)
+- [ ] 更多企业模板（+16 个）
+- [ ] 图表高级定制
+- [ ] 条件格式增强
+- [ ] 批量邮件合并
+- [ ] 插件系统
+
+### v1.2.0 (计划中)
+- [ ] PowerPoint 支持
+- [ ] PDF 编辑支持
+- [ ] 云端存储集成（S3/OneDrive）
+- [ ] Web UI 界面
+- [ ] 协作编辑功能
+
+## 许可协议
+
+MIT License - 开源免费使用
+
+## 支持与贡献
+
+- 问题反馈：GitHub Issues
+- 功能建议：GitHub Discussions
+- 代码贡献：Pull Requests
+
+## 致谢
+
+- python-docx 开发团队
+- openpyxl 开发团队
+- docxtpl 开发团队
+- Jinja2 开发团队
+
+---
+
+**Made with ❤️ for Enterprise Document Automation**

@@ -1,0 +1,35 @@
+{
+  "name": "员工考勤表",
+  "description": "员工月度考勤跟踪表，包含出勤、迟到、早退、请假等记录",
+  "variables": {
+    "month": "月份",
+    "year": "年份",
+    "department": "部门",
+    "employees": [
+      {
+        "employee_id": "员工ID",
+        "name": "员工姓名",
+        "position": "职位",
+        "attendance": {
+          "present_days": "出勤天数",
+          "late_days": "迟到天数",
+          "early_days": "早退天数",
+          "leave_days": "请假天数",
+          "overtime_hours": "加班小时"
+        },
+        "notes": "备注"
+      }
+    ],
+    "work_days": "工作日数",
+    "holidays": "假日数",
+    "total_employees": "员工总数"
+  },
+  "worksheets": [
+    "月度汇总",
+    "每日明细",
+    "请假记录",
+    "加班记录"
+  ],
+  "category": "hr",
+  "version": "1.0"
+}
