@@ -2,8 +2,7 @@
 Office Pro - Enterprise Document Automation Suite
 Excel Processor Module
 
-基于 openpyxl 和 xlsx-template 理念的企业级 Excel 处理
-支持模板驱动、数据替换、图表生成
+Enterprise-grade Excel processing based on openpyxl with template support
 """
 
 from __future__ import annotations
@@ -13,7 +12,16 @@ import json
 import re
 from datetime import datetime, date
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, Tuple, Iterable
+from typing import Any, Dict, List, Optional, Union, Tuple, Type, Generator
+
+from .base_processor import DocumentProcessor, require_document
+from .exceptions import (
+    DependencyError,
+    DocumentNotLoadedError,
+    TemplateNotFoundError,
+    TemplateRenderError,
+    ParameterError,
+)
 
 try:
     from openpyxl import Workbook, load_workbook
@@ -33,9 +41,12 @@ try:
     from openpyxl.formatting.rule import ColorScaleRule, CellIsRule
     from openpyxl.comments import Comment
     from openpyxl.drawing.image import Image as XLImage
+    from openpyxl.chart._chart import ChartBase as Chart
     OPENPYXL_AVAILABLE = True
 except ImportError:
     OPENPYXL_AVAILABLE = False
+    WorkbookType = None
+    Chart = None
 
 try:
     import pandas as pd
@@ -44,100 +55,144 @@ except ImportError:
     PANDAS_AVAILABLE = False
 
 
+class ChartFactory:
+    """
+    Chart factory for creating different chart types
+    
+    Follows Open/Closed Principle - new chart types can be registered
+    without modifying existing code
+    """
+    
+    _charts: Dict[str, Type[Chart]] = {}
+    
+    @classmethod
+    def register(cls, chart_type: str, chart_class: Type[Chart]) -> None:
+        """Register a chart type"""
+        cls._charts[chart_type.lower()] = chart_class
+    
+    @classmethod
+    def create(cls, chart_type: str) -> Chart:
+        """Create a chart by type"""
+        chart_type_lower = chart_type.lower()
+        if chart_type_lower not in cls._charts:
+            raise ParameterError(
+                f"Unknown chart type: {chart_type}. "
+                f"Available types: {list(cls._charts.keys())}"
+            )
+        return cls._charts[chart_type_lower]()
+    
+    @classmethod
+    def available_types(cls) -> List[str]:
+        """Get list of available chart types"""
+        return list(cls._charts.keys())
+
+
+if OPENPYXL_AVAILABLE:
+    ChartFactory.register('bar', BarChart)
+    ChartFactory.register('line', LineChart)
+    ChartFactory.register('pie', PieChart)
+    ChartFactory.register('scatter', ScatterChart)
+
+
 class XlsxTemplateEngine:
     """
-    xlsx-template 风格的 Excel 模板引擎
+    xlsx-template style Excel template engine
     
-    支持在 Excel 模板中使用占位符，然后替换为实际数据
-    占位符格式：${variable}、${table:data}、${image:logo}
+    Supports placeholders in Excel templates: ${variable}, ${table:data}, ${image:logo}
     """
     
-    # 占位符正则表达式
     PLACEHOLDER_PATTERN = re.compile(r'\$\{([^}]+)\}')
     
     def __init__(self, workbook: WorkbookType):
         """
-        初始化模板引擎
+        Initialize template engine
         
         Args:
-            workbook: openpyxl Workbook 对象
+            workbook: openpyxl Workbook object
         """
         self.workbook = workbook
         self.substitutions: Dict[str, Any] = {}
     
     def substitute(self, data: Dict[str, Any]) -> None:
         """
-        执行数据替换
+        Execute data substitution
         
         Args:
-            data: 替换数据字典
+            data: Substitution data dictionary
         """
         self.substitutions = data
         
-        # 遍历所有工作表
         for sheet_name in self.workbook.sheetnames:
             worksheet = self.workbook[sheet_name]
             self._process_worksheet(worksheet)
     
     def _process_worksheet(self, worksheet: Worksheet) -> None:
-        """处理工作表中的所有单元格"""
+        """Process all cells in worksheet"""
+        cells_to_update = []
+        
         for row in worksheet.iter_rows():
             for cell in row:
                 if cell.value and isinstance(cell.value, str):
-                    new_value = self._replace_placeholders(cell.value)
-                    if new_value != cell.value:
-                        cell.value = new_value
+                    if '${' in cell.value:
+                        new_value = self._replace_placeholders(cell.value)
+                        if new_value != cell.value:
+                            cells_to_update.append((cell, new_value))
+        
+        for cell, new_value in cells_to_update:
+            cell.value = new_value
     
     def _replace_placeholders(self, text: str) -> Any:
-        """
-        替换文本中的占位符
+        """Replace placeholders in text"""
+        if not isinstance(text, str):
+            return text
         
-        支持的格式：
-        - ${variable} - 简单变量替换
-        - ${table:data.property} - 表格数据
-        - ${image:logo} - 图片插入（返回特殊标记）
-        """
         def replace_match(match):
-            placeholder = match.group(1).strip()
+            placeholder = match.group(1).strip() if match.group(1) else ""
             
-            # 处理 table: 前缀
+            if not placeholder:
+                return match.group(0)
+            
+            if ':' in placeholder:
+                prefix, _, name = placeholder.partition(':')
+                if not name.strip():
+                    return match.group(0)
+            
             if placeholder.startswith('table:'):
-                return self._handle_table_placeholder(placeholder[6:])
+                table_name = placeholder[6:].strip()
+                if not table_name:
+                    return match.group(0)
+                return self._handle_table_placeholder(table_name)
             
-            # 处理 image: 前缀
             if placeholder.startswith('image:'):
-                return self._handle_image_placeholder(placeholder[6:])
+                image_name = placeholder[6:].strip()
+                if not image_name:
+                    return match.group(0)
+                return self._handle_image_placeholder(image_name)
             
-            # 简单变量替换
             if placeholder in self.substitutions:
                 value = self.substitutions[placeholder]
                 return self._format_value(value)
             
-            # 尝试解析点号路径（如 user.name）
             if '.' in placeholder:
                 value = self._get_nested_value(self.substitutions, placeholder)
                 if value is not None:
                     return self._format_value(value)
             
-            # 未找到替换值，保留原样
             return match.group(0)
         
         return self.PLACEHOLDER_PATTERN.sub(replace_match, text)
     
     def _handle_table_placeholder(self, path: str) -> str:
-        """处理表格占位符"""
-        # 这里应该返回表格数据，但在单元格中需要特殊处理
-        # 简化处理：尝试获取值并格式化
+        """Handle table placeholder"""
         value = self._get_nested_value(self.substitutions, path)
         return self._format_value(value) if value is not None else f"${{table:{path}}}"
     
     def _handle_image_placeholder(self, path: str) -> str:
-        """处理图片占位符"""
-        # 图片需要特殊处理，这里返回标记
+        """Handle image placeholder"""
         return f"${{image:{path}}}"
     
     def _get_nested_value(self, data: Dict, path: str) -> Any:
-        """获取嵌套字典值"""
+        """Get nested dictionary value"""
         keys = path.split('.')
         value = data
         for key in keys:
@@ -148,7 +203,7 @@ class XlsxTemplateEngine:
         return value
     
     def _format_value(self, value: Any) -> str:
-        """格式化值为字符串"""
+        """Format value to string"""
         if value is None:
             return ""
         if isinstance(value, (datetime, date)):
@@ -156,232 +211,213 @@ class XlsxTemplateEngine:
         return str(value)
 
 
-class ExcelProcessor:
+class ExcelProcessor(DocumentProcessor):
     """
-    企业级 Excel 处理器
+    Enterprise-grade Excel processor
     
-    支持功能：
-    - 工作簿创建与编辑
-    - 模板驱动数据替换（xlsx-template 风格）
-    - 图表生成
-    - 数据透视表
-    - 格式设置
+    Features:
+    - Workbook creation and editing
+    - Template-driven data substitution
+    - Chart generation with factory pattern
+    - Data import/export
     """
+    
+    _document_type_name = "Excel workbook"
     
     def __init__(self, template_dir: Optional[str] = None):
         """
-        初始化 Excel 处理器
+        Initialize Excel processor
         
         Args:
-            template_dir: 模板目录路径
+            template_dir: Template directory path
         """
         if not OPENPYXL_AVAILABLE:
-            raise ImportError(
+            raise DependencyError(
                 "openpyxl is required. Install with: pip install openpyxl"
             )
         
-        self.template_dir = template_dir or self._get_default_template_dir()
-        self._workbook: Optional[WorkbookType] = None
         self._template_engine: Optional[XlsxTemplateEngine] = None
+        super().__init__(template_dir)
     
     def _get_default_template_dir(self) -> str:
-        """获取默认模板目录"""
+        """Get default template directory"""
         skill_root = Path(__file__).parent.parent
         templates_dir = skill_root / "assets" / "templates" / "excel"
         return str(templates_dir)
     
-    # ==================== 工作簿操作 ====================
-    
-    def create_workbook(self) -> WorkbookType:
+    @require_document
+    def save(self, path: str) -> None:
         """
-        创建新工作簿
+        Save workbook
+        
+        Args:
+            path: Save path
+        """
+        self._ensure_output_dir(path)
+        self._document.save(path)
+    
+    def create_document(self) -> WorkbookType:
+        """
+        Create new workbook
         
         Returns:
-            Workbook 对象
+            Workbook object
         """
-        self._workbook = Workbook()
+        self._document = Workbook()
         self._template_engine = None
-        return self._workbook
+        return self._document
+    
+    def load_document(self, path: str) -> WorkbookType:
+        """
+        Load existing workbook
+        
+        Args:
+            path: File path
+            
+        Returns:
+            Workbook object
+        """
+        self._document = load_workbook(path, data_only=False)
+        self._template_engine = None
+        return self._document
     
     def load_workbook(self, path: str, data_only: bool = False) -> WorkbookType:
         """
-        加载现有工作簿
+        Load existing workbook (alias for load_document)
         
         Args:
-            path: 文件路径
-            data_only: 是否只读取数据（不读取公式）
+            path: File path
+            data_only: Whether to read only data (not formulas)
             
         Returns:
-            Workbook 对象
+            Workbook object
         """
-        self._workbook = load_workbook(path, data_only=data_only)
+        self._document = load_workbook(path, data_only=data_only)
         self._template_engine = None
-        return self._workbook
+        return self._document
     
     def load_template(self, template_name: str) -> WorkbookType:
         """
-        加载模板文件并初始化模板引擎
+        Load template file and initialize template engine
         
         Args:
-            template_name: 模板文件名
+            template_name: Template filename
             
         Returns:
-            Workbook 对象
+            Workbook object
         """
-        template_path = Path(self.template_dir) / template_name
-        if not template_path.exists():
-            raise FileNotFoundError(f"Template not found: {template_path}")
-        
+        template_path = self._validate_template_path(template_name)
         self.load_workbook(str(template_path))
-        self._template_engine = XlsxTemplateEngine(self._workbook)
-        return self._workbook
-    
-    def save(self, path: str) -> None:
-        """
-        保存工作簿
-        
-        Args:
-            path: 保存路径
-        """
-        if not self._workbook:
-            raise RuntimeError("No workbook to save.")
-        
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        self._workbook.save(path)
-    
-    # ==================== 模板渲染 ====================
+        self._template_engine = XlsxTemplateEngine(self._document)
+        return self._document
     
     def render_template(self, data: Dict[str, Any]) -> WorkbookType:
         """
-        使用数据渲染模板
+        Render template with data
         
         Args:
-            data: 替换数据字典
+            data: Substitution data dictionary
             
         Returns:
-            渲染后的 Workbook 对象
+            Rendered Workbook object
         """
         if not self._template_engine:
-            raise RuntimeError("No template loaded. Call load_template() first.")
+            raise DocumentNotLoadedError("template")
         
-        self._template_engine.substitute(data)
-        return self._workbook
-    
-    def render_and_save(self, data: Dict[str, Any], output_path: str) -> str:
-        """
-        渲染模板并保存
-        
-        Args:
-            data: 替换数据字典
-            output_path: 输出路径
-            
-        Returns:
-            保存的文件路径
-        """
-        self.render_template(data)
-        self.save(output_path)
-        return output_path
-    
-    # ==================== 工作表操作 ====================
+        try:
+            self._template_engine.substitute(data)
+            return self._document
+        except Exception as e:
+            raise TemplateRenderError(f"Template rendering failed: {e}")
     
     def get_sheet(self, name: Optional[str] = None) -> Worksheet:
         """
-        获取工作表
+        Get worksheet
         
         Args:
-            name: 工作表名称，默认获取活动工作表
+            name: Worksheet name, defaults to active sheet
             
         Returns:
-            Worksheet 对象
+            Worksheet object
         """
-        if not self._workbook:
-            raise RuntimeError("No workbook loaded.")
+        if not self._document:
+            raise DocumentNotLoadedError("workbook")
         
         if name:
-            return self._workbook[name]
-        return self._workbook.active
+            return self._document[name]
+        return self._document.active
     
+    @require_document
     def create_sheet(self, title: str, index: Optional[int] = None) -> Worksheet:
         """
-        创建工作表
+        Create worksheet
         
         Args:
-            title: 工作表标题
-            index: 插入位置
+            title: Worksheet title
+            index: Insert position
             
         Returns:
-            Worksheet 对象
+            Worksheet object
         """
-        if not self._workbook:
-            raise RuntimeError("No workbook loaded.")
-        
-        return self._workbook.create_sheet(title=title, index=index)
+        return self._document.create_sheet(title=title, index=index)
     
+    @require_document
     def remove_sheet(self, name: str) -> None:
         """
-        删除工作表
+        Remove worksheet
         
         Args:
-            name: 工作表名称
+            name: Worksheet name
         """
-        if not self._workbook:
-            raise RuntimeError("No workbook loaded.")
-        
-        sheet = self._workbook[name]
-        self._workbook.remove(sheet)
-    
-    # ==================== 单元格操作 ====================
+        sheet = self._document[name]
+        self._document.remove(sheet)
     
     def write_cell(self, cell: str, value: Any, sheet: Optional[str] = None) -> None:
         """
-        写入单元格
+        Write cell
         
         Args:
-            cell: 单元格坐标（如 'A1'）
-            value: 值
-            sheet: 工作表名称
+            cell: Cell coordinate (e.g. 'A1')
+            value: Value
+            sheet: Worksheet name
         """
         ws = self.get_sheet(sheet)
         ws[cell] = value
     
     def read_cell(self, cell: str, sheet: Optional[str] = None) -> Any:
         """
-        读取单元格
+        Read cell
         
         Args:
-            cell: 单元格坐标
-            sheet: 工作表名称
+            cell: Cell coordinate
+            sheet: Worksheet name
             
         Returns:
-            单元格值
+            Cell value
         """
         ws = self.get_sheet(sheet)
         return ws[cell].value
     
-    def write_range(self, start_cell: str, data: List[List[Any]], sheet: Optional[str] = None) -> None:
+    def write_range(self, start_cell: str, data: List[List[Any]], 
+                    sheet: Optional[str] = None) -> None:
         """
-        写入数据区域
+        Write data range
         
         Args:
-            start_cell: 起始单元格
-            data: 二维数据列表
-            sheet: 工作表名称
+            start_cell: Starting cell
+            data: 2D data list
+            sheet: Worksheet name
         """
         ws = self.get_sheet(sheet)
-        
-        # 解析起始单元格
-        from openpyxl.utils import coordinate_to_tuple
         start_row, start_col = coordinate_to_tuple(start_cell)
         
         for row_idx, row_data in enumerate(data):
             for col_idx, value in enumerate(row_data):
-                cell = ws.cell(
+                ws.cell(
                     row=start_row + row_idx,
                     column=start_col + col_idx,
                     value=value
                 )
-    
-    # ==================== 样式与格式 ====================
     
     def set_cell_style(self, cell: str, 
                        font: Optional[Dict] = None,
@@ -391,16 +427,16 @@ class ExcelProcessor:
                        number_format: Optional[str] = None,
                        sheet: Optional[str] = None) -> None:
         """
-        设置单元格样式
+        Set cell style
         
         Args:
-            cell: 单元格坐标
-            font: 字体设置 {'name': 'Arial', 'size': 12, 'bold': True}
-            fill: 填充设置 {'color': 'FFFF00', 'pattern': 'solid'}
-            border: 边框设置 {'style': 'thin', 'color': '000000'}
-            alignment: 对齐设置 {'horizontal': 'center', 'vertical': 'center'}
-            number_format: 数字格式 '#,##0.00'
-            sheet: 工作表名称
+            cell: Cell coordinate
+            font: Font settings {'name': 'Arial', 'size': 12, 'bold': True}
+            fill: Fill settings {'color': 'FFFF00', 'pattern': 'solid'}
+            border: Border settings {'style': 'thin', 'color': '000000'}
+            alignment: Alignment settings {'horizontal': 'center', 'vertical': 'center'}
+            number_format: Number format '#,##0.00'
+            sheet: Worksheet name
         """
         ws = self.get_sheet(sheet)
         cell_obj = ws[cell]
@@ -417,138 +453,89 @@ class ExcelProcessor:
         if number_format:
             cell_obj.number_format = number_format
     
-    def set_column_width(self, column: str, width: float, sheet: Optional[str] = None) -> None:
+    def set_column_width(self, column: str, width: float, 
+                         sheet: Optional[str] = None) -> None:
         """
-        设置列宽
+        Set column width
         
         Args:
-            column: 列字母（如 'A'）
-            width: 宽度
-            sheet: 工作表名称
+            column: Column letter (e.g. 'A')
+            width: Width
+            sheet: Worksheet name
         """
         ws = self.get_sheet(sheet)
         ws.column_dimensions[column].width = width
     
-    def set_row_height(self, row: int, height: float, sheet: Optional[str] = None) -> None:
+    def set_row_height(self, row: int, height: float, 
+                       sheet: Optional[str] = None) -> None:
         """
-        设置行高
+        Set row height
         
         Args:
-            row: 行号（1-based）
-            height: 高度
-            sheet: 工作表名称
+            row: Row number (1-based)
+            height: Height
+            sheet: Worksheet name
         """
         ws = self.get_sheet(sheet)
         ws.row_dimensions[row].height = height
     
     def merge_cells(self, range_str: str, sheet: Optional[str] = None) -> None:
         """
-        合并单元格
+        Merge cells
         
         Args:
-            range_str: 区域（如 'A1:B2'）
-            sheet: 工作表名称
+            range_str: Range (e.g. 'A1:B2')
+            sheet: Worksheet name
         """
         ws = self.get_sheet(sheet)
         ws.merge_cells(range_str)
     
-    # ==================== 图表 ====================
-    
     def add_chart(self, chart_type: str, data_range: str, 
                   title: Optional[str] = None,
                   position: Optional[str] = None,
-                  sheet: Optional[str] = None) -> Any:
+                  sheet: Optional[str] = None) -> Chart:
         """
-        添加图表
+        Add chart using factory pattern
         
         Args:
-            chart_type: 图表类型（bar/line/pie/scatter）
-            data_range: 数据区域
-            title: 图表标题
-            position: 图表位置（单元格坐标）
-            sheet: 工作表名称
+            chart_type: Chart type (bar/line/pie/scatter)
+            data_range: Data range
+            title: Chart title
+            position: Chart position (cell coordinate)
+            sheet: Worksheet name
             
         Returns:
-            Chart 对象
+            Chart object
         """
         ws = self.get_sheet(sheet)
         
-        # 创建图表
-        if chart_type == 'bar':
-            chart = BarChart()
-        elif chart_type == 'line':
-            chart = LineChart()
-        elif chart_type == 'pie':
-            chart = PieChart()
-        elif chart_type == 'scatter':
-            chart = ScatterChart()
-        else:
-            chart = BarChart()
-        
-        # 设置数据
+        chart = ChartFactory.create(chart_type)
         chart.add_data(Reference(ws, data_range))
         
-        # 设置标题
         if title:
             chart.title = title
         
-        # 设置位置
-        if position:
-            ws.add_chart(chart, position)
-        else:
-            ws.add_chart(chart, 'E5')
+        ws.add_chart(chart, position or 'E5')
         
         return chart
     
-    # ==================== 数据透视表 ====================
-    
-    def create_pivot_table(self, source_range: str, dest_cell: str,
-                          rows: Optional[List[str]] = None,
-                          columns: Optional[List[str]] = None,
-                          values: Optional[List[Tuple[str, str]]] = None,
-                          sheet: Optional[str] = None) -> Any:
-        """
-        创建数据透视表（简化版）
-        
-        注意：openpyxl 的数据透视表功能有限，建议使用 pandas 预处理数据
-        
-        Args:
-            source_range: 源数据区域
-            dest_cell: 目标位置
-            rows: 行字段列表
-            columns: 列字段列表
-            values: 值字段列表 [(字段名, 聚合函数)]
-            sheet: 工作表名称
-        """
-        # 数据透视表实现较复杂，建议使用 pandas 处理后再写入
-        # 这里返回提示信息
-        raise NotImplementedError(
-            "数据透视表建议使用 pandas 预处理数据后再写入 Excel。"
-            "示例：pivot_df = df.pivot_table(...) ; ep.write_dataframe(pivot_df, ...)"
-        )
-    
-    # ==================== 数据导入导出 ====================
-    
     def read_dataframe(self, sheet: Optional[str] = None, 
-                       header: int = 0, 
-                       range_str: Optional[str] = None) -> Any:
+                       header: int = 0) -> Any:
         """
-        读取数据到 pandas DataFrame
+        Read data to pandas DataFrame
         
         Args:
-            sheet: 工作表名称
-            header: 表头行号
-            range_str: 数据区域
+            sheet: Worksheet name
+            header: Header row number
             
         Returns:
             pandas DataFrame
         """
         if not PANDAS_AVAILABLE:
-            raise ImportError("pandas is required. Install with: pip install pandas")
+            raise DependencyError("pandas is required. Install with: pip install pandas")
         
         ws = self.get_sheet(sheet)
         
-        # 读取数据
         data = []
         for row in ws.iter_rows(values_only=True):
             data.append(row)
@@ -556,47 +543,73 @@ class ExcelProcessor:
         if not data:
             return pd.DataFrame()
         
-        # 创建 DataFrame
-        df = pd.DataFrame(data[header+1:], columns=data[header])
-        return df
+        return pd.DataFrame(data[header+1:], columns=data[header])
+    
+    def read_dataframe_chunked(self, sheet: Optional[str] = None, 
+                               chunk_size: int = 1000) -> Generator[Any, None, None]:
+        """
+        Read data in chunks for large files
+        
+        Args:
+            sheet: Worksheet name
+            chunk_size: Number of rows per chunk
+            
+        Yields:
+            pandas DataFrame for each chunk
+        """
+        if not PANDAS_AVAILABLE:
+            raise DependencyError("pandas is required. Install with: pip install pandas")
+        
+        ws = self.get_sheet(sheet)
+        
+        data = []
+        header = None
+        
+        for idx, row in enumerate(ws.iter_rows(values_only=True), 1):
+            if idx == 1:
+                header = row
+                continue
+            
+            data.append(row)
+            
+            if len(data) >= chunk_size:
+                yield pd.DataFrame(data, columns=header)
+                data = []
+        
+        if data:
+            yield pd.DataFrame(data, columns=header)
     
     def write_dataframe(self, df: Any, start_cell: str = 'A1', 
                         sheet: Optional[str] = None,
                         include_header: bool = True,
                         index: bool = False) -> None:
         """
-        将 pandas DataFrame 写入 Excel
+        Write pandas DataFrame to Excel
         
         Args:
             df: pandas DataFrame
-            start_cell: 起始单元格
-            sheet: 工作表名称
-            include_header: 是否包含表头
-            index: 是否包含索引
+            start_cell: Starting cell
+            sheet: Worksheet name
+            include_header: Whether to include header
+            index: Whether to include index
         """
         if not PANDAS_AVAILABLE:
-            raise ImportError("pandas is required. Install with: pip install pandas")
+            raise DependencyError("pandas is required. Install with: pip install pandas")
         
         ws = self.get_sheet(sheet)
-        
-        # 解析起始单元格
-        from openpyxl.utils import coordinate_to_tuple
         start_row, start_col = coordinate_to_tuple(start_cell)
         
-        # 写入索引（如果需要）
         if index:
             for i, idx in enumerate(df.index):
                 ws.cell(row=start_row + i + (1 if include_header else 0), 
                        column=start_col, value=idx)
             start_col += 1
         
-        # 写入表头
         if include_header:
             for col_idx, col_name in enumerate(df.columns):
                 ws.cell(row=start_row, column=start_col + col_idx, value=col_name)
             start_row += 1
         
-        # 写入数据
         for row_idx, row in enumerate(df.itertuples(index=False)):
             for col_idx, value in enumerate(row):
                 ws.cell(row=start_row + row_idx, 
@@ -607,13 +620,13 @@ class ExcelProcessor:
                    delimiter: str = ',',
                    encoding: str = 'utf-8') -> None:
         """
-        从 CSV 文件导入数据
+        Import data from CSV file
         
         Args:
-            csv_path: CSV 文件路径
-            sheet: 目标工作表名称
-            delimiter: 分隔符
-            encoding: 编码
+            csv_path: CSV file path
+            sheet: Target worksheet name
+            delimiter: Delimiter
+            encoding: Encoding
         """
         import csv
         
@@ -629,13 +642,13 @@ class ExcelProcessor:
                    delimiter: str = ',',
                    encoding: str = 'utf-8') -> None:
         """
-        导出到 CSV 文件
+        Export to CSV file
         
         Args:
-            csv_path: 输出 CSV 文件路径
-            sheet: 源工作表名称
-            delimiter: 分隔符
-            encoding: 编码
+            csv_path: Output CSV file path
+            sheet: Source worksheet name
+            delimiter: Delimiter
+            encoding: Encoding
         """
         import csv
         
@@ -646,16 +659,14 @@ class ExcelProcessor:
             for row in ws.iter_rows(values_only=True):
                 writer.writerow(row)
     
-    # ==================== 属性访问 ====================
-    
     @property
     def workbook(self) -> Optional[WorkbookType]:
-        """获取当前工作簿"""
-        return self._workbook
+        """Get current workbook"""
+        return self._document
     
     @property
     def sheetnames(self) -> List[str]:
-        """获取所有工作表名称"""
-        if not self._workbook:
+        """Get all worksheet names"""
+        if not self._document:
             return []
-        return self._workbook.sheetnames
+        return self._document.sheetnames

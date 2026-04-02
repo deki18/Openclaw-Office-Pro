@@ -1,15 +1,75 @@
 """
 Office Pro - Enterprise Document Automation Suite
 
-企业级 Word 和 Excel 文档自动化工具
+Enterprise-grade Word and Excel document automation tool
 """
 
 from .word_processor import WordProcessor
-from .excel_processor import ExcelProcessor, XlsxTemplateEngine
+from .excel_processor import ExcelProcessor, XlsxTemplateEngine, ChartFactory
+from .base_processor import DocumentProcessor, require_document, require_template
+from .exceptions import (
+    OfficeProError,
+    ErrorCode,
+    ParameterError,
+    TemplateError,
+    TemplateNotFoundError,
+    TemplateRenderError,
+    DataError,
+    DataFileNotFoundError,
+    DataParseError,
+    DataEncodingError,
+    FileError,
+    PathTraversalError,
+    FileAccessDeniedError,
+    DependencyError,
+    DocumentNotLoadedError,
+)
+from .utils import (
+    load_json_file,
+    safe_resolve_path,
+    ensure_directory,
+    get_template_dir,
+    validate_template_path,
+    TemplateCache,
+    cached_file_read,
+    get_cached_template_list,
+    invalidate_template_cache,
+)
+from .skill_interface import SkillInterface, SkillActions
 
 __version__ = '1.0.0'
 __all__ = [
     'WordProcessor',
     'ExcelProcessor', 
     'XlsxTemplateEngine',
+    'ChartFactory',
+    'DocumentProcessor',
+    'require_document',
+    'require_template',
+    'OfficeProError',
+    'ErrorCode',
+    'ParameterError',
+    'TemplateError',
+    'TemplateNotFoundError',
+    'TemplateRenderError',
+    'DataError',
+    'DataFileNotFoundError',
+    'DataParseError',
+    'DataEncodingError',
+    'FileError',
+    'PathTraversalError',
+    'FileAccessDeniedError',
+    'DependencyError',
+    'DocumentNotLoadedError',
+    'load_json_file',
+    'safe_resolve_path',
+    'ensure_directory',
+    'get_template_dir',
+    'validate_template_path',
+    'TemplateCache',
+    'cached_file_read',
+    'get_cached_template_list',
+    'invalidate_template_cache',
+    'SkillInterface',
+    'SkillActions',
 ]

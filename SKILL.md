@@ -30,6 +30,197 @@ metadata: {"openclaw":{"emoji":"📊","requires":{"bins":["python3"],"pip":["pyt
 - 命令行接口 (CLI)
 - Python API
 
+## API Schema
+
+### Actions 输入输出规范
+
+#### word.generate
+生成Word文档（基于模板）
+
+```json
+{
+  "input": {
+    "type": "object",
+    "required": ["template", "data", "output"],
+    "properties": {
+      "template": {
+        "type": "string",
+        "description": "Template filename (e.g., meeting-minutes.docx)"
+      },
+      "data": {
+        "type": "object",
+        "description": "Template data as JSON object or path to JSON file"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output file path"
+      },
+      "template_dir": {
+        "type": "string",
+        "description": "Custom template directory (optional)"
+      }
+    }
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "success": {"type": "boolean"},
+      "output_path": {"type": "string"},
+      "message": {"type": "string"},
+      "error": {"type": "string"},
+      "error_code": {"type": "string"}
+    }
+  }
+}
+```
+
+#### excel.generate
+生成Excel报表（基于模板）
+
+```json
+{
+  "input": {
+    "type": "object",
+    "required": ["template", "data", "output"],
+    "properties": {
+      "template": {
+        "type": "string",
+        "description": "Template filename (e.g., sales-report.xlsx)"
+      },
+      "data": {
+        "type": "object",
+        "description": "Template data as JSON object or path to JSON file"
+      },
+      "output": {
+        "type": "string",
+        "description": "Output file path"
+      },
+      "template_dir": {
+        "type": "string",
+        "description": "Custom template directory (optional)"
+      }
+    }
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "success": {"type": "boolean"},
+      "output_path": {"type": "string"},
+      "message": {"type": "string"},
+      "error": {"type": "string"},
+      "error_code": {"type": "string"}
+    }
+  }
+}
+```
+
+#### templates.list
+列出可用模板
+
+```json
+{
+  "input": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "enum": ["word", "excel", "all"],
+        "default": "all",
+        "description": "Template type to list"
+      },
+      "template_dir": {
+        "type": "string",
+        "description": "Custom template directory (optional)"
+      }
+    }
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "success": {"type": "boolean"},
+      "templates": {
+        "type": "object",
+        "properties": {
+          "word": {"type": "array", "items": {"type": "string"}},
+          "excel": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}
+```
+
+#### word.create
+创建空白Word文档
+
+```json
+{
+  "input": {
+    "type": "object",
+    "required": ["output"],
+    "properties": {
+      "output": {
+        "type": "string",
+        "description": "Output file path"
+      },
+      "title": {
+        "type": "string",
+        "description": "Document title (optional)"
+      }
+    }
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "success": {"type": "boolean"},
+      "output_path": {"type": "string"},
+      "message": {"type": "string"}
+    }
+  }
+}
+```
+
+#### excel.create
+创建空白Excel工作簿
+
+```json
+{
+  "input": {
+    "type": "object",
+    "required": ["output"],
+    "properties": {
+      "output": {
+        "type": "string",
+        "description": "Output file path"
+      },
+      "sheets": {
+        "type": "integer",
+        "default": 1,
+        "description": "Number of sheets to create"
+      }
+    }
+  },
+  "output": {
+    "type": "object",
+    "properties": {
+      "success": {"type": "boolean"},
+      "output_path": {"type": "string"},
+      "message": {"type": "string"}
+    }
+  }
+}
+```
+
+### Error Codes
+
+| Code | Description |
+|------|-------------|
+| SKILL_404 | Template not found |
+| SKILL_401 | Invalid file path (security violation) |
+| SKILL_402 | Template rendering failed |
+| SKILL_501 | Dependency not available |
+| SKILL_999 | Document not loaded |
+
 ## 快速开始
 
 ### 安装
