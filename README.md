@@ -87,48 +87,6 @@ openclaw sessions_spawn \
   --mode run
 ```
 
-## 📁 项目结构
-
-```
-Openclaw-Office-Pro/
-├── SKILL.md                    # OpenClaw技能主文档
-├── README.md                   # 项目说明文档
-├── PHASE3_COMPLETE.md          # 开发完成报告
-├── requirements.txt            # Python依赖列表
-├── .gitignore                  # Git忽略文件
-│
-├── scripts/                    # 核心代码
-│   ├── __init__.py
-│   ├── word_processor.py       # Word处理器 (387行)
-│   ├── excel_processor.py      # Excel处理器 (661行)
-│   ├── cli.py                  # 命令行工具 (251行)
-│   └── generate_all_templates.py # 批量生成脚本
-│
-├── assets/templates/           # 企业级模板
-│   ├── word/                   # 8个Word模板
-│   │   ├── letter-business.docx      # 商务信函
-│   │   ├── meeting-minutes.docx      # 会议纪要
-│   │   ├── project-proposal.docx     # 项目提案
-│   │   ├── work-report.docx          # 工作报告
-│   │   ├── contract-simple.docx      # 合同模板
-│   │   ├── resume-professional.docx  # 专业简历
-│   │   ├── press-release.docx        # 新闻稿
-│   │   └── invitation-formal.docx    # 正式邀请函
-│   │
-│   └── excel/                  # 8个Excel模板
-│       ├── financial-statement.xlsx   # 财务报表
-│       ├── budget-template.xlsx       # 预算表
-│       ├── project-timeline.xlsx      # 项目进度
-│       ├── inventory-management.xlsx  # 库存管理
-│       ├── sales-report.xlsx          # 销售报表
-│       ├── attendance-tracking.xlsx   # 员工考勤
-│       ├── crm-simple.xlsx            # 客户管理
-│       └── pivot-demo.xlsx            # 数据透视
-│
-└── references/                 # 参考文档
-    └── api_reference.md        # API参考手册
-```
-
 ## 🎯 可用模板
 
 ### Word模板 (8个)
@@ -168,9 +126,7 @@ Openclaw-Office-Pro/
 
 ## 📖 文档
 
-- [API参考手册](references/api_reference.md) - 完整的API文档
-- [开发完成报告](PHASE3_COMPLETE.md) - 项目开发历程和经验总结
-- [OpenClaw技能文档](SKILL.md) - 作为OpenClaw技能的使用指南
+- [SKILL.md](SKILL.md) - OpenClaw技能主文档，包含完整API规范和使用指南
 
 ## 🛠️ 开发
 
@@ -197,13 +153,6 @@ python -m pytest tests/
 python scripts/test_end_to_end.py
 ```
 
-### 贡献代码
-1. Fork本仓库
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启Pull Request
-
 ## 📄 许可证
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
@@ -219,7 +168,6 @@ python scripts/test_end_to_end.py
 
 - 问题反馈: [GitHub Issues](https://github.com/yourusername/Openclaw-Office-Pro/issues)
 - 功能建议: [GitHub Discussions](https://github.com/yourusername/Openclaw-Office-Pro/discussions)
-- 文档: [参考文档](references/)
 
 ---
 
