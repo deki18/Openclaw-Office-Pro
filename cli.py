@@ -17,7 +17,7 @@ try:
 except ImportError:
     CLICK_AVAILABLE = False
 
-from .exceptions import (
+from core import (
     OfficeProError,
     DataFileNotFoundError,
     DataParseError,
@@ -25,10 +25,12 @@ from .exceptions import (
     TemplateNotFoundError,
     PathTraversalError,
     ErrorCode,
+    load_json_file,
+    validate_template_path,
+    get_template_dir,
 )
-from .utils import load_json_file, validate_template_path, get_template_dir
-from .word_processor import WordProcessor
-from .excel_processor import ExcelProcessor
+from word_processor import WordProcessor
+from excel_processor import ExcelProcessor
 
 
 def handle_error(error: Exception, exit_code: int = 1) -> None:

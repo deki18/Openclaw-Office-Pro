@@ -69,3 +69,9 @@ Thumbs.db
 
 # Documentation
 doc/
+
+# Generated Templates (auto-generated on skill install)
+assets/templates/word/*.docx
+assets/templates/word/*.json
+assets/templates/excel/*.xlsx
+assets/templates/excel/*.json

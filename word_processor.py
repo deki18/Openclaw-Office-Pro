@@ -13,12 +13,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from .base_processor import DocumentProcessor, require_document, require_template
-from .exceptions import (
-    DependencyError,
-    DocumentNotLoadedError,
-    TemplateNotFoundError,
-    TemplateRenderError,
+from core import (
+    DocumentProcessor, require_document, require_template,
+    DependencyError, DocumentNotLoadedError, TemplateNotFoundError,
+    TemplateRenderError
 )
 
 try:
@@ -74,7 +72,7 @@ class WordProcessor(DocumentProcessor):
     
     def _get_default_template_dir(self) -> str:
         """Get default template directory"""
-        skill_root = Path(__file__).parent.parent
+        skill_root = Path(__file__).parent
         templates_dir = skill_root / "assets" / "templates" / "word"
         return str(templates_dir)
     

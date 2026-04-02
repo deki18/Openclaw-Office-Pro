@@ -13,15 +13,53 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type
 
-from .exceptions import (
+from core import (
     OfficeProError,
     ErrorCode,
     ParameterError,
     TemplateNotFoundError,
     DataFileNotFoundError,
 )
-from .word_processor import WordProcessor
-from .excel_processor import ExcelProcessor
+from word_processor import WordProcessor
+from excel_processor import ExcelProcessor
+
+
+def ensure_templates_exist() -> bool:
+    """
+    Ensure templates exist, generate if missing
+    Called during skill initialization
+    
+    Returns:
+        True if templates are available, False otherwise
+    """
+    skill_root = Path(__file__).parent
+    templates_dir = skill_root / "assets" / "templates"
+    word_dir = templates_dir / "word"
+    excel_dir = templates_dir / "excel"
+    
+    # Check if templates already exist
+    word_exists = word_dir.exists() and len(list(word_dir.glob("*.docx"))) >= 8
+    excel_exists = excel_dir.exists() and len(list(excel_dir.glob("*.xlsx"))) >= 8
+    
+    if word_exists and excel_exists:
+        return True
+    
+    # Try to generate templates
+    try:
+        generator_path = skill_root / "generate_premium_templates.py"
+        if generator_path.exists():
+            import subprocess
+            result = subprocess.run(
+                [sys.executable, str(generator_path)],
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            return result.returncode == 0
+    except Exception:
+        pass
+    
+    return False
 
 
 class SkillInterface:
@@ -171,8 +209,8 @@ class SkillInterface:
             "timestamp": datetime.now().isoformat(),
             "dependencies": {},
             "templates": {
-                "word": {"available": False, "count": 0},
-                "excel": {"available": False, "count": 0}
+                "word": {"available": False, "count": 0, "generated": False},
+                "excel": {"available": False, "count": 0, "generated": False}
             }
         }
         
@@ -192,17 +230,28 @@ class SkillInterface:
                 checks["dependencies"][display_name] = "missing"
                 checks["status"] = "degraded"
         
+        # Ensure templates exist (generate if needed)
+        templates_generated = ensure_templates_exist()
+        
         try:
-            skill_root = Path(__file__).parent.parent
+            skill_root = Path(__file__).parent
             word_dir = skill_root / "assets" / "templates" / "word"
             if word_dir.exists():
                 count = len(list(word_dir.glob("*.docx")))
-                checks["templates"]["word"] = {"available": True, "count": count}
+                checks["templates"]["word"] = {
+                    "available": count > 0,
+                    "count": count,
+                    "generated": templates_generated
+                }
             
             excel_dir = skill_root / "assets" / "templates" / "excel"
             if excel_dir.exists():
                 count = len(list(excel_dir.glob("*.xlsx")))
-                checks["templates"]["excel"] = {"available": True, "count": count}
+                checks["templates"]["excel"] = {
+                    "available": count > 0,
+                    "count": count,
+                    "generated": templates_generated
+                }
         except Exception:
             pass
         
@@ -317,7 +366,7 @@ class SkillActions:
         if template_dir:
             base_dir = Path(template_dir)
         else:
-            skill_root = Path(__file__).parent.parent
+            skill_root = Path(__file__).parent
             base_dir = skill_root / "assets" / "templates"
         
         result = {"success": True, "templates": {}}

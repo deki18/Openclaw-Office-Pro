@@ -230,6 +230,20 @@ metadata: {"openclaw":{"emoji":"📊","requires":{"bins":["python3"],"pip":["pyt
 pip install python-docx openpyxl docxtpl pandas Pillow click
 ```
 
+### 模板初始化
+
+本技能首次运行时会**自动生成** 16 个专业级模板（8个Word + 8个Excel）。模板将在首次调用时自动创建，无需手动上传。
+
+如果需要手动生成模板：
+
+```bash
+python generate_premium_templates.py
+```
+
+生成的模板位于 `assets/templates/` 目录：
+- **Word模板**: `assets/templates/word/` - 会议纪要、商务信函、简历、项目提案、工作报告、合同、新闻稿、邀请函
+- **Excel模板**: `assets/templates/excel/` - 销售报告、财务报表、预算表、项目时间线、库存管理、CRM、考勤表、数据透视表
+
 ### 使用模板生成 Word 文档
 
 ```python

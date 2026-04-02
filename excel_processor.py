@@ -14,13 +14,10 @@ from datetime import datetime, date
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, Tuple, Type, Generator
 
-from .base_processor import DocumentProcessor, require_document
-from .exceptions import (
-    DependencyError,
-    DocumentNotLoadedError,
-    TemplateNotFoundError,
-    TemplateRenderError,
-    ParameterError,
+from core import (
+    DocumentProcessor, require_document,
+    DependencyError, DocumentNotLoadedError, TemplateNotFoundError,
+    TemplateRenderError, ParameterError
 )
 
 try:
@@ -241,7 +238,7 @@ class ExcelProcessor(DocumentProcessor):
     
     def _get_default_template_dir(self) -> str:
         """Get default template directory"""
-        skill_root = Path(__file__).parent.parent
+        skill_root = Path(__file__).parent
         templates_dir = skill_root / "assets" / "templates" / "excel"
         return str(templates_dir)
     
