@@ -78,3 +78,6 @@ assets/templates/excel/*.json
 
 # Trae IDE
 .trae/
+
+# Output files
+output/
